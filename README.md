@@ -14,9 +14,10 @@ Built cleanly following the **Model-View-Controller (MVC)** architectural design
 ## 🌟 Key Features
 
 - **Real-Time Hand Tracking**: Uses Google's MediaPipe Hands solution for high FPS tracking on CPU.
+- **Robust Detection**: Includes auto brightness/contrast enhancement to detect hands accurately even in difficult lighting or backlit environments.
 - **Accurate Finger Counting (0 - 5)**:
   - Detects extended states for Thumb, Index, Middle, Ring, and Pinky fingers.
-  - Handles left and right hand orientation checks dynamically.
+  - Handles left and right hand orientation checks dynamically using robust 3D Euclidean distance math.
 - **Dynamic Graphical HUD**:
   - Highlights open finger tips with green indicators and closed tips with red indicators.
   - Large, clear visual counter box displaying the number of extended fingers.
@@ -88,7 +89,7 @@ python main.py
 ### Controls & Gestures
 - **Show Hand**: Hold your hand in front of the webcam.
 - **Extend Fingers**: Raise 0, 1, 2, 3, 4, or 5 fingers to see the real-time count.
-- **Quit Application**: Press the **`q`** key on your keyboard while focusing on the camera window.
+- **Quit Application**: Press the **`q`** key on your keyboard or click the **`X` (close)** button on the camera window to exit cleanly.
 
 ---
 
