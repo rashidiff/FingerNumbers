@@ -1,7 +1,6 @@
 """
-Models package for audio interface and hand tracking landmark logic.
+Models package for hand detection and finger counting logic.
 """
-from .audio_model import AudioModel
-from .hand_detector_model import HandDetectorModel
+from .finger_counter_model import FingerCounterModel
 
-__all__ = ["AudioModel", "HandDetectorModel"]
+__all__ = ["FingerCounterModel"]
