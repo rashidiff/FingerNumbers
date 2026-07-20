@@ -12,20 +12,22 @@ class FingerCounterModel:
     TIP_IDS = [4, 8, 12, 16, 20]
     PIP_IDS = [3, 6, 10, 14, 18]
 
-    def __init__(self, max_hands: int = 1, detection_con: float = 0.5, track_con: float = 0.5):
+    def __init__(self, max_hands: int = 1, detection_con: float = 0.3, track_con: float = 0.3):
         self.max_hands = max_hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=self.max_hands,
-            min_detection_confidence=detection_con,  # Lower threshold (0.5) for backlit/low-light sensitivity
+            min_detection_confidence=detection_con,  # Very low threshold for difficult lighting
             min_tracking_confidence=track_con
         )
         self.mp_draw = mp.solutions.drawing_utils
 
     def process_frame(self, img_rgb: Any) -> Any:
-        """Process RGB frame using MediaPipe Hands."""
-        return self.hands.process(img_rgb)
+        """Process RGB frame using MediaPipe Hands with brightness enhancement."""
+        # Enhance brightness and contrast to help MediaPipe detect dark/backlit hands
+        enhanced_rgb = cv2.convertScaleAbs(img_rgb, alpha=1.2, beta=30)
+        return self.hands.process(enhanced_rgb)
 
     def analyze_hand(self, img: Any, results: Any) -> Optional[Dict[str, Any]]:
         """
