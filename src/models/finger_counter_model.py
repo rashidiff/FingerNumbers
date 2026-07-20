@@ -12,13 +12,13 @@ class FingerCounterModel:
     TIP_IDS = [4, 8, 12, 16, 20]
     PIP_IDS = [3, 6, 10, 14, 18]
 
-    def __init__(self, max_hands: int = 1, detection_con: float = 0.7, track_con: float = 0.7):
+    def __init__(self, max_hands: int = 1, detection_con: float = 0.5, track_con: float = 0.5):
         self.max_hands = max_hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=self.max_hands,
-            min_detection_confidence=detection_con,
+            min_detection_confidence=detection_con,  # Lower threshold (0.5) for backlit/low-light sensitivity
             min_tracking_confidence=track_con
         )
         self.mp_draw = mp.solutions.drawing_utils
@@ -38,10 +38,12 @@ class FingerCounterModel:
         h, w, c = img.shape
         hand_landmarks = results.multi_hand_landmarks[0]
 
-        # Determine hand orientation (Right or Left hand)
-        hand_label = "Right"
+        # Determine hand orientation label
+        hand_label = "Hand"
         if results.multi_handedness:
-            hand_label = results.multi_handedness[0].classification[0].label
+            # Note: in selfie view (flipped), MediaPipe label is mirrored
+            raw_label = results.multi_handedness[0].classification[0].label
+            hand_label = "Right" if raw_label == "Left" else "Left"
 
         # Draw hand skeleton connections
         self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
@@ -54,21 +56,20 @@ class FingerCounterModel:
 
         finger_states = [0, 0, 0, 0, 0]  # [Thumb, Index, Middle, Ring, Pinky]
 
-        if lm_list:
-            # 1. Thumb detection (Horizontal coordinate check based on hand type)
-            # In flipped selfie view: Right hand thumb extends left (x[4] < x[3]), Left hand thumb extends right (x[4] > x[3])
-            if hand_label == "Right":
-                if lm_list[self.TIP_IDS[0]][0] < lm_list[self.PIP_IDS[0]][0]:
-                    finger_states[0] = 1
-            else:
-                if lm_list[self.TIP_IDS[0]][0] > lm_list[self.PIP_IDS[0]][0]:
-                    finger_states[0] = 1
+        if len(lm_list) >= 21:
+            # 1. Thumb Detection: Compare distance between Thumb Tip (4) -> Pinky MCP (17) vs Thumb IP (3) -> Pinky MCP (17)
+            # This Euclidean distance check is rotation-invariant and works for both Left and Right hands perfectly.
+            dist_thumb_tip = math.hypot(lm_list[4][0] - lm_list[17][0], lm_list[4][1] - lm_list[17][1])
+            dist_thumb_ip = math.hypot(lm_list[3][0] - lm_list[17][0], lm_list[3][1] - lm_list[17][1])
+            if dist_thumb_tip > dist_thumb_ip:
+                finger_states[0] = 1
 
-            # 2. Four main fingers detection (Vertical y-coordinate check)
+            # 2. Four Main Fingers Detection (Index, Middle, Ring, Pinky)
+            # Check if Finger Tip (8, 12, 16, 20) is higher (smaller y) than PIP Joint (6, 10, 14, 18)
             for i in range(1, 5):
                 tip_y = lm_list[self.TIP_IDS[i]][1]
                 pip_y = lm_list[self.PIP_IDS[i]][1]
-                if tip_y < pip_y:  # Finger tip is higher than PIP joint in image space
+                if tip_y < pip_y:
                     finger_states[i] = 1
 
         total_count = sum(finger_states)
