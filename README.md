@@ -1,27 +1,26 @@
-# 🖐️ Hand Gesture Master Volume Controller (MVC Architecture)
+# 🖐️ Hand Finger Counter (MVC Architecture)
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-green.svg)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-Hand%20Tracking-orange.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg)
 ![Architecture](https://img.shields.io/badge/Architecture-MVC-purple.svg)
 
-An intelligent, real-time computer vision application that controls the Windows system master audio volume based on the pinch distance between the user's **Thumb** and **Index finger**.
+An intelligent, real-time computer vision application that detects and counts extended fingers (**0 to 5**) on a human hand using **OpenCV** and Google's **MediaPipe**.
 
-Built cleanly using the **Model-View-Controller (MVC)** architectural design pattern.
+Built cleanly following the **Model-View-Controller (MVC)** architectural design pattern.
 
 ---
 
 ## 🌟 Key Features
 
-- **Real-Time Hand Tracking**: Uses Google's MediaPipe Hands solution to detect and track key points at high FPS.
-- **Euclidean Distance Math**: Computes the pixel distance between Thumb tip (Landmark `4`) and Index finger tip (Landmark `8`).
-- **Smooth Audio Mapping**: Uses NumPy `interp` to map distance seamlessly into hardware decibels (`dB`) for Windows volume control.
+- **Real-Time Hand Tracking**: Uses Google's MediaPipe Hands solution for high FPS tracking on CPU.
+- **Accurate Finger Counting (0 - 5)**:
+  - Detects extended states for Thumb, Index, Middle, Ring, and Pinky fingers.
+  - Handles left and right hand orientation checks dynamically.
 - **Dynamic Graphical HUD**:
-  - Highlights landmarks with colored indicators and connecting vectors.
-  - Interactive visual indicator when fingers pinch closely.
-  - On-screen vertical volume bar and percentage counter.
-- **Clean MVC Architecture**: Fully decoupled logic separating computer vision models, hardware audio interface, UI drawing, and controllers.
+  - Highlights open finger tips with green indicators and closed tips with red indicators.
+  - Large, clear visual counter box displaying the number of extended fingers.
+- **Clean MVC Architecture**: Fully modularized code separating computer vision algorithms, UI rendering, and event controllers.
 
 ---
 
@@ -37,16 +36,15 @@ FingerNumbers/
 ├── main.py                  # Application entry point
 └── src/                     # Core application package
     ├── __init__.py
-    ├── models/              # Model Layer (Data & Hardware Logic)
+    ├── models/              # Model Layer (Data & Vision Logic)
     │   ├── __init__.py
-    │   ├── audio_model.py        # Windows Audio hardware interface (Pycaw wrapper)
-    │   └── hand_detector_model.py# MediaPipe hand tracking & landmark distance math
+    │   └── finger_counter_model.py # MediaPipe tracking & 0-5 finger counting math
     ├── views/               # View Layer (GUI & Overlay Rendering)
     │   ├── __init__.py
-    │   └── gui_view.py           # OpenCV frame capture, UI overlay & window display
+    │   └── gui_view.py           # OpenCV frame capture & Finger Count HUD rendering
     └── controllers/         # Controller Layer (Business Logic & Event Loop)
         ├── __init__.py
-        └── main_controller.py    # Maps distances to volume & coordinates loop
+        └── main_controller.py    # Orchestrates vision model & view loop
 ```
 
 ---
@@ -54,7 +52,6 @@ FingerNumbers/
 ## ⚡ Prerequisites & Installation
 
 ### Requirements
-- **Operating System**: Windows (required for Pycaw COM interface)
 - **Python**: Python 3.8+
 - **Webcam**: Standard USB or Integrated Camera
 
@@ -66,7 +63,7 @@ FingerNumbers/
    cd FingerNumbers
    ```
 
-2. **Create and activate a virtual environment (Optional but Recommended)**:
+2. **Create and activate a virtual environment (Optional)**:
    ```bash
    python -m venv venv
    # On Windows PowerShell:
@@ -89,24 +86,20 @@ python main.py
 ```
 
 ### Controls & Gestures
-- **Increase Volume**: Move thumb and index finger apart.
-- **Decrease Volume**: Pinch thumb and index finger closer together.
-- **Mute / Minimum Volume**: Touch thumb and index finger tips together (visual indicator turns green).
+- **Show Hand**: Hold your hand in front of the webcam.
+- **Extend Fingers**: Raise 0, 1, 2, 3, 4, or 5 fingers to see the real-time count.
 - **Quit Application**: Press the **`q`** key on your keyboard while focusing on the camera window.
 
 ---
 
-## 📐 Math & Computer Vision Details
+## 📐 Finger Detection Logic
 
-1. **Landmark Extraction**:
-   - `Landmark 4`: Thumb Tip $(x_1, y_1)$
-   - `Landmark 8`: Index Finger Tip $(x_2, y_2)$
+1. **Four Main Fingers (Index, Middle, Ring, Pinky)**:
+   - Evaluates vertical landmark coordinates ($y_{tip} < y_{pip}$).
+   - If finger tip is higher in the frame than PIP joint, finger is counted as extended (`1`).
 
-2. **Euclidean Distance**:
-   $$\text{Distance} = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$
-
-3. **Range Interpolation**:
-   $$\text{Volume (dB)} = \text{np.interp}(\text{Distance}, [20, 200], [\text{min\_vol\_dB}, \text{max\_vol\_dB}])$$
+2. **Thumb Finger**:
+   - Evaluates horizontal landmark coordinates ($x_{tip}$ vs $x_{pip}$) adapted to hand orientation (`Right` or `Left`).
 
 ---
 
