@@ -63,11 +63,20 @@ class GUIView:
 
     def show_frame(self, img: Any) -> bool:
         """
-        Display rendered frame in OpenCV window and check for exit key ('q').
-        Returns True if continuing, False if 'q' pressed.
+        Display rendered frame in OpenCV window and check for exit key ('q') or window close button.
+        Returns True if continuing, False if 'q' pressed or window closed.
         """
         cv2.imshow(self.window_name, img)
         key = cv2.waitKey(1) & 0xFF
+        
+        # Check if the window was closed by the user clicking the 'X' button
+        try:
+            if cv2.getWindowProperty(self.window_name, cv2.WND_PROP_VISIBLE) < 1:
+                return False
+        except cv2.error:
+            # If the window is already destroyed, property check might throw an error
+            return False
+
         return key != ord('q')
 
     def close(self) -> None:
