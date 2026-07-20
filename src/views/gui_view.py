@@ -1,67 +1,77 @@
 import cv2
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Dict, Any, Optional
 
 class GUIView:
     """
-    View layer responsible for visual rendering, GUI overlay drawings, and camera window display.
+    View layer responsible for camera frame capture, landmark overlays,
+    and rendering Finger Count HUD on screen.
     """
     def __init__(self, camera_index: int = 0, width: int = 1280, height: int = 720):
         self.cap = cv2.VideoCapture(camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        self.window_name = "Hand Gesture Volume Control (MVC)"
+        self.window_name = "Hand Finger Counter (MVC)"
 
     def read_frame(self) -> Tuple[bool, Any]:
-        """Read a frame from webcam and flip horizontally for intuitive selfie view."""
+        """Read frame from camera and flip horizontally for selfie view."""
         success, img = self.cap.read()
         if success:
             img = cv2.flip(img, 1)
         return success, img
 
-    def render_finger_landmarks(self, img, pinch_data: Dict[str, Any]) -> None:
+    def render_finger_highlights(self, img: Any, hand_data: Dict[str, Any]) -> None:
         """
-        Draw circles on landmark 4 and 8, line between them, and center point indicator.
+        Highlight finger tips: Green circle for extended fingers, Magenta for closed fingers.
         """
-        x1, y1 = pinch_data["p1"]
-        x2, y2 = pinch_data["p2"]
-        cx, cy = pinch_data["center"]
-        distance = pinch_data["distance"]
+        lm_list = hand_data["lm_list"]
+        finger_states = hand_data["finger_states"]
+        tip_ids = hand_data["tip_ids"]
 
-        # Draw outer landmark circles
-        cv2.circle(img, (x1, y1), 12, (255, 0, 255), cv2.FILLED)
-        cv2.circle(img, (x2, y2), 12, (255, 0, 255), cv2.FILLED)
+        for idx, tip_id in enumerate(tip_ids):
+            cx, cy = lm_list[tip_id]
+            is_open = finger_states[idx] == 1
+            color = (0, 255, 0) if is_open else (0, 0, 255)
+            radius = 12 if is_open else 8
+            cv2.circle(img, (cx, cy), radius, color, cv2.FILLED)
+            cv2.circle(img, (cx, cy), radius + 2, (255, 255, 255), 2)
 
-        # Draw connecting line
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
-
-        # Center point indicator - turns green when pinched close (< 25px)
-        center_color = (0, 255, 0) if distance < 25 else (255, 0, 255)
-        cv2.circle(img, (cx, cy), 10 if distance < 25 else 8, center_color, cv2.FILLED)
-
-    def render_volume_hud(self, img, vol_bar: float, vol_per: float) -> None:
+    def render_count_hud(self, img: Any, hand_data: Optional[Dict[str, Any]]) -> None:
         """
-        Render vertical Volume Bar GUI and percentage text HUD.
+        Render visual HUD counter box on top-left of the screen.
         """
-        # Outer Volume Bar Box
-        cv2.rectangle(img, (50, 150), (85, 400), (255, 0, 0), 2)
-        # Filled Volume Level
-        cv2.rectangle(img, (50, int(vol_bar)), (85, 400), (0, 255, 0), cv2.FILLED)
-        # Text Overlay Percentage
-        cv2.putText(img, f'{int(vol_per)} %', (40, 450), 
-                    cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+        # Outer HUD Box Background
+        cv2.rectangle(img, (40, 40), (220, 200), (0, 0, 0), cv2.FILLED)
+        cv2.rectangle(img, (40, 40), (220, 200), (255, 255, 255), 3)
 
-    def show_frame(self, img) -> bool:
+        if hand_data:
+            count = hand_data["total_count"]
+            hand_label = hand_data["hand_label"]
+            
+            # Display Count Number inside HUD Box
+            cv2.putText(img, str(count), (105, 155),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3.5, (0, 255, 0), 6)
+            
+            # Display Hand Label below HUD Box
+            cv2.putText(img, f"Hand: {hand_label}", (45, 230),
+                        cv2.FONT_HERSHEY_COMPLEX, 0.7, (255, 255, 255), 2)
+        else:
+            # Display NO HAND detected state
+            cv2.putText(img, "0", (105, 155),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3.5, (100, 100, 100), 6)
+            cv2.putText(img, "No Hand Detected", (45, 230),
+                        cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 165, 255), 2)
+
+    def show_frame(self, img: Any) -> bool:
         """
-        Display image frame in OpenCV window and check for quit key ('q').
-        Returns True if program should continue, False if user pressed 'q'.
+        Display rendered frame in OpenCV window and check for exit key ('q').
+        Returns True if continuing, False if 'q' pressed.
         """
         cv2.imshow(self.window_name, img)
         key = cv2.waitKey(1) & 0xFF
         return key != ord('q')
 
-
     def close(self) -> None:
-        """Release camera hardware and close windows."""
+        """Release webcam resource and destroy windows."""
         if self.cap.isOpened():
             self.cap.release()
         cv2.destroyAllWindows()
