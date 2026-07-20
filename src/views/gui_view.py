@@ -59,8 +59,6 @@ class GUIView:
         key = cv2.waitKey(1) & 0xFF
         return key != ord('q')
 
-    def release(() -> None:
-        pass
 
     def close(self) -> None:
         """Release camera hardware and close windows."""

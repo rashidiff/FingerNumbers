@@ -22,7 +22,7 @@ class MainController:
         self.vol_bar = 400.0
         self.vol_per = 0.0
 
-    def run((self) -> None:
+    def run(self) -> None:
         """Main execution loop for application."""
         print("Application Started. Press 'q' in the window to quit.")
         try:
