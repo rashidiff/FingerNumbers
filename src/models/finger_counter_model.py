@@ -2,17 +2,18 @@ import cv2
 import mediapipe as mp
 import math
 from typing import Tuple, List, Dict, Optional, Any
+from src import config
 
 class FingerCounterModel:
     """
-    Model layer responsible for detecting hand landmarks using MediaPipe
-    and calculating the number of extended fingers (0 to 5).
+    Model layer responsible for computer vision hand landmark tracking using MediaPipe.
+    Counts 0-5 extended fingers dynamically adapting to Left/Right hand orientation.
     """
     # Landmark tip IDs for [Thumb, Index, Middle, Ring, Pinky]
     TIP_IDS = [4, 8, 12, 16, 20]
     PIP_IDS = [3, 6, 10, 14, 18]
 
-    def __init__(self, max_hands: int = 1, detection_con: float = 0.3, track_con: float = 0.3):
+    def __init__(self, max_hands: int = config.MAX_HANDS, detection_con: float = config.MIN_DETECTION_CONFIDENCE, track_con: float = config.MIN_TRACKING_CONFIDENCE):
         self.max_hands = max_hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
@@ -26,7 +27,7 @@ class FingerCounterModel:
     def process_frame(self, img_rgb: Any) -> Any:
         """Process RGB frame using MediaPipe Hands with brightness enhancement."""
         # Enhance brightness and contrast to help MediaPipe detect dark/backlit hands
-        enhanced_rgb = cv2.convertScaleAbs(img_rgb, alpha=1.2, beta=30)
+        enhanced_rgb = cv2.convertScaleAbs(img_rgb, alpha=config.ENHANCE_ALPHA, beta=config.ENHANCE_BETA)
         return self.hands.process(enhanced_rgb)
 
     def analyze_hand(self, img: Any, results: Any) -> Optional[Dict[str, Any]]:

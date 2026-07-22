@@ -8,8 +8,8 @@ class MainController:
     Controller layer coordinating user input from Computer Vision model (Finger Counter)
     and rendering on-screen updates in View.
     """
-    def __init__(self, max_hands: int = 1, detection_con: float = 0.3):
-        self.finger_model = FingerCounterModel(max_hands=max_hands, detection_con=detection_con)
+    def __init__(self):
+        self.finger_model = FingerCounterModel()
         self.view = GUIView()
 
     def run(self) -> None:
