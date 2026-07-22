@@ -8,6 +8,8 @@ class GUIView:
     """
     def __init__(self, camera_index: int = config.CAMERA_INDEX, width: int = config.WINDOW_WIDTH, height: int = config.WINDOW_HEIGHT):
         self.cap = cv2.VideoCapture(camera_index)
+        if not self.cap.isOpened():
+            raise RuntimeError(f"Failed to open camera with index {camera_index}. Please check your webcam connection.")
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.window_name = config.WINDOW_NAME
