@@ -61,6 +61,12 @@ class GUIView:
             cv2.putText(img, "No Hand Detected", (45, 230),
                         cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 165, 255), 2)
 
+    def render_fps(self, img: Any, fps: int) -> None:
+        """
+        Render FPS counter on the top right of the screen.
+        """
+        cv2.putText(img, f"FPS: {fps}", (1050, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
+
     def show_frame(self, img: Any) -> bool:
         """
         Display rendered frame in OpenCV window and check for exit key ('q') or window close button.
