@@ -53,9 +53,15 @@ class FingerCounterModel:
 
         # Convert normalized landmark coordinates to pixel (x, y) coordinates
         lm_list: List[Tuple[int, int]] = []
+        out_of_bounds = False
+        w_margin = w * 0.05
+        h_margin = h * 0.05
+        
         for lm in hand_landmarks.landmark:
             cx, cy = int(lm.x * w), int(lm.y * h)
             lm_list.append((cx, cy))
+            if cx < w_margin or cx > w - w_margin or cy < h_margin or cy > h - h_margin:
+                out_of_bounds = True
 
         finger_states = [0, 0, 0, 0, 0]  # [Thumb, Index, Middle, Ring, Pinky]
 
@@ -82,5 +88,6 @@ class FingerCounterModel:
             "finger_states": finger_states,
             "total_count": total_count,
             "hand_label": hand_label,
-            "tip_ids": self.TIP_IDS
+            "tip_ids": self.TIP_IDS,
+            "out_of_bounds": out_of_bounds
         }

@@ -46,6 +46,7 @@ class GUIView:
         if hand_data:
             count = hand_data["total_count"]
             hand_label = hand_data["hand_label"]
+            out_of_bounds = hand_data.get("out_of_bounds", False)
             
             # Display Count Number inside HUD Box
             cv2.putText(img, str(count), config.COUNT_TEXT_POS,
@@ -54,6 +55,10 @@ class GUIView:
             # Display Hand Label below HUD Box
             cv2.putText(img, f"Hand: {hand_label}", config.LABEL_TEXT_POS,
                         cv2.FONT_HERSHEY_COMPLEX, 0.7, config.COLOR_WHITE, 2)
+
+            if out_of_bounds:
+                cv2.putText(img, "WARNING: Hand Out of Bounds!", (400, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, config.COLOR_RED, 3)
         else:
             # Display NO HAND detected state
             cv2.putText(img, "0", config.COUNT_TEXT_POS,
