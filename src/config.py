@@ -18,6 +18,17 @@ MAX_HANDS: int = 1
 # Image Enhancement
 ENHANCE_ALPHA: float = 1.2
 ENHANCE_BETA: int = 30
+LOW_LIGHT_THRESHOLD: int = 90
+HIGH_LIGHT_THRESHOLD: int = 190
+BRIGHT_SCENE_BETA: int = -10
+
+# Finger Analysis
+FINGER_ANGLE_THRESHOLD: float = 155.0
+THUMB_ANGLE_THRESHOLD: float = 150.0
+DISTANCE_MARGIN: float = 0.015
+
+# Temporal Smoothing
+SMOOTHING_WINDOW: int = 5
 
 # Colors (BGR format for OpenCV)
 COLOR_GREEN: Tuple[int, int, int] = (0, 255, 0)
@@ -29,8 +40,8 @@ COLOR_BLUE: Tuple[int, int, int] = (255, 0, 0)
 COLOR_GRAY: Tuple[int, int, int] = (100, 100, 100)
 
 # HUD Settings
-HUD_BOX_START: Tuple[int, int] = (40, 40)
-HUD_BOX_END: Tuple[int, int] = (220, 200)
-COUNT_TEXT_POS: Tuple[int, int] = (105, 155)
-LABEL_TEXT_POS: Tuple[int, int] = (45, 230)
-FPS_TEXT_POS: Tuple[int, int] = (1050, 50)
+HUD_MARGIN_X_RATIO: float = 0.03
+HUD_MARGIN_Y_RATIO: float = 0.05
+HUD_BOX_WIDTH_RATIO: float = 0.14
+HUD_BOX_HEIGHT_RATIO: float = 0.22
+FPS_MARGIN_X_RATIO: float = 0.18
