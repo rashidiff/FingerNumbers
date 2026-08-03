@@ -59,6 +59,7 @@ class MainController:
 
                 # Step 3: Render finger highlights if hand is present
                 if hand_data:
+                    self.view.render_hand_landmarks(img, hand_data)
                     self.view.render_finger_highlights(img, hand_data)
 
                 # Step 4: Render Finger Count HUD Box and FPS on screen

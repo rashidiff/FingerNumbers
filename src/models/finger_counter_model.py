@@ -22,7 +22,6 @@ class FingerCounterModel:
             min_detection_confidence=detection_con,  # Very low threshold for difficult lighting
             min_tracking_confidence=track_con
         )
-        self.mp_draw = mp.solutions.drawing_utils
 
     def process_frame(self, img_rgb: Any) -> Any:
         """Process RGB frame using adaptive brightness enhancement."""

@@ -1,6 +1,7 @@
 import cv2
 from typing import Tuple, Optional, Dict, Any
 from src import config
+import mediapipe as mp
 
 class GUIView:
     """
@@ -13,6 +14,8 @@ class GUIView:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.window_name = config.WINDOW_NAME
+        self.mp_draw = mp.solutions.drawing_utils
+        self.mp_hands = mp.solutions.hands
 
     def read_frame(self) -> Tuple[bool, Any]:
         """Capture a frame from the webcam and flip it."""
@@ -20,6 +23,32 @@ class GUIView:
         if success:
             img = cv2.flip(img, 1)
         return success, img
+
+    def render_hand_landmarks(self, img: Any, hand_data: Dict[str, Any]) -> None:
+        """Draw the hand skeleton for the selected hand."""
+        self.mp_draw.draw_landmarks(
+            img,
+            hand_data["hand_landmarks"],
+            self.mp_hands.HAND_CONNECTIONS
+        )
+
+    @staticmethod
+    def _hud_geometry(img: Any) -> Dict[str, Tuple[int, int]]:
+        """Scale HUD geometry from the current frame size."""
+        height, width = img.shape[:2]
+        start_x = int(width * config.HUD_MARGIN_X_RATIO)
+        start_y = int(height * config.HUD_MARGIN_Y_RATIO)
+        box_width = int(width * config.HUD_BOX_WIDTH_RATIO)
+        box_height = int(height * config.HUD_BOX_HEIGHT_RATIO)
+
+        return {
+            "box_start": (start_x, start_y),
+            "box_end": (start_x + box_width, start_y + box_height),
+            "count_pos": (start_x + int(box_width * 0.35), start_y + int(box_height * 0.72)),
+            "label_pos": (start_x, start_y + box_height + int(height * 0.045)),
+            "warning_pos": (int(width * 0.31), start_y + 10),
+            "fps_pos": (width - int(width * config.FPS_MARGIN_X_RATIO), start_y + 10),
+        }
 
     def render_finger_highlights(self, img: Any, hand_data: Dict[str, Any]) -> None:
         """
@@ -41,9 +70,11 @@ class GUIView:
         """
         Render visual HUD counter box on top-left of the screen.
         """
+        geometry = self._hud_geometry(img)
+
         # Outer HUD Box Background
-        cv2.rectangle(img, config.HUD_BOX_START, config.HUD_BOX_END, config.COLOR_BLACK, cv2.FILLED)
-        cv2.rectangle(img, config.HUD_BOX_START, config.HUD_BOX_END, config.COLOR_WHITE, 3)
+        cv2.rectangle(img, geometry["box_start"], geometry["box_end"], config.COLOR_BLACK, cv2.FILLED)
+        cv2.rectangle(img, geometry["box_start"], geometry["box_end"], config.COLOR_WHITE, 3)
 
         if hand_data:
             count = hand_data["total_count"]
@@ -51,28 +82,29 @@ class GUIView:
             out_of_bounds = hand_data.get("out_of_bounds", False)
             
             # Display Count Number inside HUD Box
-            cv2.putText(img, str(count), config.COUNT_TEXT_POS,
+            cv2.putText(img, str(count), geometry["count_pos"],
                         cv2.FONT_HERSHEY_SIMPLEX, 3.5, config.COLOR_GREEN, 6)
             
             # Display Hand Label below HUD Box
-            cv2.putText(img, f"Hand: {hand_label}", config.LABEL_TEXT_POS,
+            cv2.putText(img, f"Hand: {hand_label}", geometry["label_pos"],
                         cv2.FONT_HERSHEY_COMPLEX, 0.7, config.COLOR_WHITE, 2)
 
             if out_of_bounds:
-                cv2.putText(img, "WARNING: Hand Out of Bounds!", (400, 50),
+                cv2.putText(img, "WARNING: Hand Out of Bounds!", geometry["warning_pos"],
                             cv2.FONT_HERSHEY_SIMPLEX, 1, config.COLOR_RED, 3)
         else:
             # Display NO HAND detected state
-            cv2.putText(img, "0", config.COUNT_TEXT_POS,
+            cv2.putText(img, "0", geometry["count_pos"],
                         cv2.FONT_HERSHEY_SIMPLEX, 3.5, config.COLOR_GRAY, 6)
-            cv2.putText(img, "No Hand Detected", config.LABEL_TEXT_POS,
+            cv2.putText(img, "No Hand Detected", geometry["label_pos"],
                         cv2.FONT_HERSHEY_COMPLEX, 0.6, config.COLOR_ORANGE, 2)
 
     def render_fps(self, img: Any, fps: int) -> None:
         """
         Render FPS counter on the top right of the screen.
         """
-        cv2.putText(img, f"FPS: {fps}", config.FPS_TEXT_POS, cv2.FONT_HERSHEY_SIMPLEX, 1, config.COLOR_BLUE, 3)
+        geometry = self._hud_geometry(img)
+        cv2.putText(img, f"FPS: {fps}", geometry["fps_pos"], cv2.FONT_HERSHEY_SIMPLEX, 1, config.COLOR_BLUE, 3)
 
     def show_frame(self, img: Any) -> bool:
         """
