@@ -14,10 +14,11 @@ Built cleanly following the **Model-View-Controller (MVC)** architectural design
 ## 🌟 Key Features
 
 - **Real-Time Hand Tracking**: Uses Google's MediaPipe Hands solution for high FPS tracking on CPU.
-- **Robust Detection**: Includes auto brightness/contrast enhancement to detect hands accurately even in difficult lighting or backlit environments.
+- **Robust Detection**: Includes adaptive brightness/contrast enhancement to handle darker or backlit scenes without over-processing already well-lit frames.
 - **Accurate Finger Counting (0 - 5)**:
   - Detects extended states for Thumb, Index, Middle, Ring, and Pinky fingers.
-  - Handles left and right hand orientation checks dynamically using robust 3D Euclidean distance math.
+  - Uses 3D landmark geometry and joint-angle checks instead of only screen-space `y` comparisons.
+- **Stable Output**: Applies a short temporal smoothing window to reduce flicker between adjacent counts.
 - **Dynamic Graphical HUD**:
   - Highlights open finger tips with green indicators and closed tips with red indicators.
   - Large, clear visual counter box displaying the number of extended fingers.
@@ -37,6 +38,7 @@ FingerNumbers/
 ├── main.py                  # Application entry point
 └── src/                     # Core application package
     ├── __init__.py
+    ├── config.py             # Shared runtime configuration and thresholds
     ├── models/              # Model Layer (Data & Vision Logic)
     │   ├── __init__.py
     │   └── finger_counter_model.py # MediaPipe tracking & 0-5 finger counting math
@@ -46,6 +48,8 @@ FingerNumbers/
     └── controllers/         # Controller Layer (Business Logic & Event Loop)
         ├── __init__.py
         └── main_controller.py    # Orchestrates vision model & view loop
+└── tests/
+    └── test_finger_counter_model.py # Unit tests for geometry and smoothing logic
 ```
 
 ---
@@ -91,16 +95,22 @@ python main.py
 - **Extend Fingers**: Raise 0, 1, 2, 3, 4, or 5 fingers to see the real-time count.
 - **Quit Application**: Press the **`q`** key on your keyboard or click the **`X` (close)** button on the camera window to exit cleanly.
 
+### Run Tests
+
+```bash
+python -m unittest discover -s tests
+```
+
 ---
 
 ## 📐 Finger Detection Logic
 
 1. **Four Main Fingers (Index, Middle, Ring, Pinky)**:
-   - Evaluates vertical landmark coordinates ($y_{tip} < y_{pip}$).
-   - If finger tip is higher in the frame than PIP joint, finger is counted as extended (`1`).
+   - Evaluates PIP joint angles in 3D landmark space.
+   - Confirms that the fingertip extends farther from the wrist than the corresponding joint.
 
 2. **Thumb Finger**:
-   - Evaluates horizontal landmark coordinates ($x_{tip}$ vs $x_{pip}$) adapted to hand orientation (`Right` or `Left`).
+   - Combines thumb joint angle with outward reach from the palm to avoid simple mirrored `x`-axis heuristics.
 
 ---
 
