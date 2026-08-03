@@ -38,6 +38,8 @@ COLOR_BLACK: Tuple[int, int, int] = (0, 0, 0)
 COLOR_ORANGE: Tuple[int, int, int] = (0, 165, 255)
 COLOR_BLUE: Tuple[int, int, int] = (255, 0, 0)
 COLOR_GRAY: Tuple[int, int, int] = (100, 100, 100)
+COLOR_CYAN: Tuple[int, int, int] = (255, 255, 0)
+COLOR_YELLOW: Tuple[int, int, int] = (0, 255, 255)
 
 # HUD Settings
 HUD_MARGIN_X_RATIO: float = 0.03
@@ -45,3 +47,10 @@ HUD_MARGIN_Y_RATIO: float = 0.05
 HUD_BOX_WIDTH_RATIO: float = 0.14
 HUD_BOX_HEIGHT_RATIO: float = 0.22
 FPS_MARGIN_X_RATIO: float = 0.18
+SIDE_PANEL_WIDTH_RATIO: float = 0.26
+SIDE_PANEL_HEIGHT_RATIO: float = 0.28
+
+# Runtime Display Defaults
+SHOW_DIAGNOSTICS_BY_DEFAULT: bool = True
+SHOW_CONTROLS_BY_DEFAULT: bool = True
+SHOW_SKELETON_BY_DEFAULT: bool = True

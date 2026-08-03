@@ -12,6 +12,16 @@ class FingerCounterModel:
     # Landmark tip IDs for [Thumb, Index, Middle, Ring, Pinky]
     TIP_IDS = [4, 8, 12, 16, 20]
     PIP_IDS = [3, 6, 10, 14, 18]
+    GESTURE_LABELS = {
+        (0, 0, 0, 0, 0): "Fist",
+        (0, 1, 0, 0, 0): "Point",
+        (0, 1, 1, 0, 0): "Peace",
+        (1, 1, 0, 0, 0): "Gun",
+        (1, 1, 1, 0, 0): "Three",
+        (0, 1, 1, 1, 1): "Four",
+        (1, 1, 1, 1, 1): "Open Palm",
+        (1, 0, 0, 0, 1): "Rock",
+    }
 
     def __init__(self, max_hands: int = config.MAX_HANDS, detection_con: float = config.MIN_DETECTION_CONFIDENCE, track_con: float = config.MIN_TRACKING_CONFIDENCE):
         self.max_hands = max_hands
@@ -63,6 +73,27 @@ class FingerCounterModel:
     @staticmethod
     def _distance(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
         return math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(3)))
+
+    @classmethod
+    def _estimate_stability(cls, landmarks: List[Tuple[float, float, float]]) -> float:
+        """Estimate pose stability from palm size and finger spread."""
+        wrist = landmarks[0]
+        middle_mcp = landmarks[9]
+        index_tip = landmarks[8]
+        pinky_tip = landmarks[20]
+
+        palm_size = cls._distance(wrist, middle_mcp)
+        finger_spread = cls._distance(index_tip, pinky_tip)
+        if palm_size == 0:
+            return 0.0
+
+        score = finger_spread / palm_size
+        return max(0.0, min(1.0, score / 2.5))
+
+    @classmethod
+    def _describe_gesture(cls, finger_states: List[int]) -> str:
+        """Map common finger combinations to a friendly gesture label."""
+        return cls.GESTURE_LABELS.get(tuple(finger_states), f"Count {sum(finger_states)}")
 
     @classmethod
     def _is_thumb_extended(cls, landmarks: List[Tuple[float, float, float]]) -> bool:
@@ -168,6 +199,16 @@ class FingerCounterModel:
                     finger_states[i] = 1
 
         total_count = sum(finger_states)
+        stability = self._estimate_stability(normalized_lm_list)
+        gesture_label = self._describe_gesture(finger_states)
+        xs = [point[0] for point in lm_list]
+        ys = [point[1] for point in lm_list]
+        bbox = {
+            "x": min(xs),
+            "y": min(ys),
+            "width": max(xs) - min(xs),
+            "height": max(ys) - min(ys),
+        }
 
         return {
             "hand_landmarks": hand_landmarks,
@@ -175,6 +216,9 @@ class FingerCounterModel:
             "finger_states": finger_states,
             "total_count": total_count,
             "hand_label": hand_label,
+            "gesture_label": gesture_label,
+            "stability": stability,
+            "bounding_box": bbox,
             "tip_ids": self.TIP_IDS,
             "out_of_bounds": out_of_bounds
         }
