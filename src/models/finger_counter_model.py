@@ -3,6 +3,7 @@ import mediapipe as mp
 import math
 from typing import Tuple, List, Dict, Optional, Any
 from src import config
+from src.config import AppSettings
 
 class FingerCounterModel:
     """
@@ -23,14 +24,15 @@ class FingerCounterModel:
         (1, 0, 0, 0, 1): "Rock",
     }
 
-    def __init__(self, max_hands: int = config.MAX_HANDS, detection_con: float = config.MIN_DETECTION_CONFIDENCE, track_con: float = config.MIN_TRACKING_CONFIDENCE):
-        self.max_hands = max_hands
+    def __init__(self, settings: Optional[AppSettings] = None):
+        self.settings = settings or AppSettings()
+        self.max_hands = self.settings.max_hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=self.max_hands,
-            min_detection_confidence=detection_con,  # Very low threshold for difficult lighting
-            min_tracking_confidence=track_con
+            min_detection_confidence=self.settings.min_detection_confidence,
+            min_tracking_confidence=self.settings.min_tracking_confidence
         )
 
     def process_frame(self, img_rgb: Any) -> Any:

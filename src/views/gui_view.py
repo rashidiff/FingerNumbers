@@ -2,17 +2,21 @@ import cv2
 from typing import Tuple, Optional, Dict, Any
 from src import config
 import mediapipe as mp
+from src.config import AppSettings
 
 class GUIView:
     """
     View layer responsible for visual rendering, GUI overlay drawings, and camera window display.
     """
-    def __init__(self, camera_index: int = config.CAMERA_INDEX, width: int = config.WINDOW_WIDTH, height: int = config.WINDOW_HEIGHT):
-        self.cap = cv2.VideoCapture(camera_index)
+    def __init__(self, settings: Optional[AppSettings] = None):
+        self.settings = settings or AppSettings()
+        self.cap = cv2.VideoCapture(self.settings.camera_index)
         if not self.cap.isOpened():
-            raise RuntimeError(f"Failed to open camera with index {camera_index}. Please check your webcam connection.")
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            raise RuntimeError(
+                f"Failed to open camera with index {self.settings.camera_index}. Please check your webcam connection."
+            )
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.settings.window_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.settings.window_height)
         self.window_name = config.WINDOW_NAME
         self.mp_draw = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands

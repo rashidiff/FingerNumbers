@@ -2,6 +2,7 @@ import unittest
 from collections import deque
 from types import SimpleNamespace
 
+from main import parse_settings
 from src import config
 from src.controllers.main_controller import MainController
 from src.models.finger_counter_model import FingerCounterModel
@@ -110,6 +111,32 @@ class MainControllerSmoothingTests(unittest.TestCase):
 
         self.assertEqual(stabilized["finger_states"], [1, 1, 0, 0, 0])
         self.assertEqual(stabilized["total_count"], 2)
+
+
+class MainCliSettingsTests(unittest.TestCase):
+    def test_parse_settings_overrides_defaults(self):
+        settings = parse_settings([
+            "--camera", "2",
+            "--width", "960",
+            "--height", "540",
+            "--max-hands", "2",
+            "--detection-confidence", "0.6",
+            "--tracking-confidence", "0.7",
+            "--smoothing-window", "9",
+            "--hide-diagnostics",
+            "--hide-skeleton",
+        ])
+
+        self.assertEqual(settings.camera_index, 2)
+        self.assertEqual(settings.window_width, 960)
+        self.assertEqual(settings.window_height, 540)
+        self.assertEqual(settings.max_hands, 2)
+        self.assertEqual(settings.min_detection_confidence, 0.6)
+        self.assertEqual(settings.min_tracking_confidence, 0.7)
+        self.assertEqual(settings.smoothing_window, 9)
+        self.assertFalse(settings.show_diagnostics)
+        self.assertTrue(settings.show_controls)
+        self.assertFalse(settings.show_skeleton)
 
 
 if __name__ == "__main__":

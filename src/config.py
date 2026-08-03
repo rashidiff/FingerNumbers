@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 """
@@ -54,3 +55,18 @@ SIDE_PANEL_HEIGHT_RATIO: float = 0.28
 SHOW_DIAGNOSTICS_BY_DEFAULT: bool = True
 SHOW_CONTROLS_BY_DEFAULT: bool = True
 SHOW_SKELETON_BY_DEFAULT: bool = True
+
+
+@dataclass(frozen=True)
+class AppSettings:
+    """Runtime-configurable application settings."""
+    camera_index: int = CAMERA_INDEX
+    window_width: int = WINDOW_WIDTH
+    window_height: int = WINDOW_HEIGHT
+    max_hands: int = MAX_HANDS
+    min_detection_confidence: float = MIN_DETECTION_CONFIDENCE
+    min_tracking_confidence: float = MIN_TRACKING_CONFIDENCE
+    smoothing_window: int = SMOOTHING_WINDOW
+    show_diagnostics: bool = SHOW_DIAGNOSTICS_BY_DEFAULT
+    show_controls: bool = SHOW_CONTROLS_BY_DEFAULT
+    show_skeleton: bool = SHOW_SKELETON_BY_DEFAULT

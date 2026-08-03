@@ -5,19 +5,21 @@ from typing import Any, Dict, Optional
 from src.models.finger_counter_model import FingerCounterModel
 from src.views.gui_view import GUIView
 from src import config
+from src.config import AppSettings
 
 class MainController:
     """
     Controller layer coordinating user input from Computer Vision model (Finger Counter)
     and rendering on-screen updates in View.
     """
-    def __init__(self):
-        self.finger_model = FingerCounterModel()
-        self.view = GUIView()
-        self.finger_history = deque(maxlen=config.SMOOTHING_WINDOW)
-        self.show_diagnostics = config.SHOW_DIAGNOSTICS_BY_DEFAULT
-        self.show_controls = config.SHOW_CONTROLS_BY_DEFAULT
-        self.show_skeleton = config.SHOW_SKELETON_BY_DEFAULT
+    def __init__(self, settings: Optional[AppSettings] = None):
+        self.settings = settings or AppSettings()
+        self.finger_model = FingerCounterModel(self.settings)
+        self.view = GUIView(self.settings)
+        self.finger_history = deque(maxlen=self.settings.smoothing_window)
+        self.show_diagnostics = self.settings.show_diagnostics
+        self.show_controls = self.settings.show_controls
+        self.show_skeleton = self.settings.show_skeleton
         self.session_stats = {
             "frames_processed": 0,
             "fps_total": 0.0,

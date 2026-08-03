@@ -22,6 +22,8 @@ Built cleanly following the **Model-View-Controller (MVC)** architectural design
 - **Dynamic Graphical HUD**:
   - Highlights open finger tips with green indicators and closed tips with red indicators.
   - Large, clear visual counter box displaying the number of extended fingers.
+- **Gesture Diagnostics**:
+  - Shows a gesture label, bounding box, pose stability estimate, and session-level FPS/count metrics.
 - **Clean MVC Architecture**: Fully modularized code separating computer vision algorithms, UI rendering, and event controllers.
 
 ---
@@ -94,6 +96,31 @@ python main.py
 - **Show Hand**: Hold your hand in front of the webcam.
 - **Extend Fingers**: Raise 0, 1, 2, 3, 4, or 5 fingers to see the real-time count.
 - **Quit Application**: Press the **`q`** key on your keyboard or click the **`X` (close)** button on the camera window to exit cleanly.
+- **Keyboard Shortcuts**:
+  - `d`: toggle diagnostics panel
+  - `s`: toggle skeleton overlay
+  - `h`: toggle controls hint
+  - `r`: reset session stats and smoothing history
+
+### Runtime Options
+
+Launch with custom camera and tracking parameters:
+
+```bash
+python main.py --camera 1 --width 960 --height 540 --max-hands 2 --smoothing-window 7
+```
+
+Supported flags:
+- `--camera`
+- `--width`
+- `--height`
+- `--max-hands`
+- `--detection-confidence`
+- `--tracking-confidence`
+- `--smoothing-window`
+- `--hide-diagnostics`
+- `--hide-controls`
+- `--hide-skeleton`
 
 ### Run Tests
 
