@@ -8,6 +8,7 @@ from src.views.gui_view import GUIView
 from src import config
 from src.config import AppSettings
 from src.models.types import HandObservation
+from src.models.temporal_smoother import FingerStateSmoother
 
 class MainController:
     """
@@ -20,6 +21,7 @@ class MainController:
         self.view = GUIView(self.settings)
         self.finger_history = deque(maxlen=self.settings.smoothing_window)
         self.hand_histories = {}
+        self.hand_smoothers = {}
         self.show_diagnostics = self.settings.show_diagnostics
         self.show_controls = self.settings.show_controls
         self.show_skeleton = self.settings.show_skeleton
@@ -64,12 +66,16 @@ class MainController:
         stabilized = []
         for observation in observations:
             key = observation.hand_label
-            history = self.hand_histories.setdefault(key, deque(maxlen=self.settings.smoothing_window))
-            previous = self.finger_history
-            self.finger_history = history
-            stabilized.append(self._stabilize_hand_data(observation))
-            self.hand_histories[key] = self.finger_history
-            self.finger_history = previous
+            smoother = self.hand_smoothers.setdefault(
+                key, FingerStateSmoother(self.settings.smoothing_window)
+            )
+            smoothed_states = smoother.update(observation.finger_states)
+            stabilized.append(replace(
+                observation,
+                finger_states=smoothed_states,
+                total_count=sum(smoothed_states),
+                gesture_label=FingerCounterModel._describe_gesture(smoothed_states),
+            ))
         return stabilized
 
     def _update_session_stats(self, fps: int, hand_data: Optional[Dict[str, Any]]) -> None:
@@ -115,6 +121,7 @@ class MainController:
             self._reset_session_stats()
             self.finger_history.clear()
             self.hand_histories.clear()
+            self.hand_smoothers.clear()
 
         return True
 

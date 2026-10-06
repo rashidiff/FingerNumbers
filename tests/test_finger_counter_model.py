@@ -6,6 +6,7 @@ from main import parse_settings
 from src import config
 from src.controllers.main_controller import MainController
 from src.models.finger_counter_model import FingerCounterModel
+from src.models.temporal_smoother import FingerStateSmoother
 
 
 def build_landmarks(overrides=None):
@@ -28,6 +29,13 @@ def build_result(hands, labels):
 
 
 class FingerCounterModelTests(unittest.TestCase):
+    def test_smoother_keeps_previous_state_on_ambiguous_frame(self):
+        smoother = FingerStateSmoother(window=3, switch_ratio=0.75)
+        self.assertEqual(smoother.update([1, 0, 0, 0, 0])[0], 1)
+        self.assertEqual(smoother.update([0, 0, 0, 0, 0])[0], 1)
+        self.assertEqual(smoother.update([0, 0, 0, 0, 0])[0], 1)
+        self.assertEqual(smoother.update([0, 0, 0, 0, 0])[0], 0)
+
     def test_analyze_hands_preserves_all_detected_hands(self):
         first = SimpleNamespace(landmark=[SimpleNamespace(x=0.25, y=0.4, z=0.0) for _ in range(21)])
         second = SimpleNamespace(landmark=[SimpleNamespace(x=0.75, y=0.4, z=0.0) for _ in range(21)])
