@@ -28,6 +28,18 @@ def build_result(hands, labels):
 
 
 class FingerCounterModelTests(unittest.TestCase):
+    def test_analyze_hands_preserves_all_detected_hands(self):
+        first = SimpleNamespace(landmark=[SimpleNamespace(x=0.25, y=0.4, z=0.0) for _ in range(21)])
+        second = SimpleNamespace(landmark=[SimpleNamespace(x=0.75, y=0.4, z=0.0) for _ in range(21)])
+        result = build_result([first, second], ["Left", "Right"])
+        model = FingerCounterModel.__new__(FingerCounterModel)
+
+        observations = model.analyze_hands(SimpleNamespace(shape=(480, 640, 3)), result)
+
+        self.assertEqual(len(observations), 2)
+        self.assertEqual([item.hand_label for item in observations], ["Right", "Left"])
+        self.assertEqual([item.total_count for item in observations], [0, 0])
+
     def test_joint_angle_for_straight_line_is_180(self):
         angle = FingerCounterModel._joint_angle(
             (0.0, 0.0, 0.0),

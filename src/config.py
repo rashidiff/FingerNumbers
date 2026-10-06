@@ -14,7 +14,7 @@ WINDOW_NAME: str = "Finger Counter"
 # MediaPipe Settings
 MIN_DETECTION_CONFIDENCE: float = 0.3
 MIN_TRACKING_CONFIDENCE: float = 0.3
-MAX_HANDS: int = 1
+MAX_HANDS: int = 2
 
 # Image Enhancement
 ENHANCE_ALPHA: float = 1.2

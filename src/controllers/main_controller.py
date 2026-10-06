@@ -1,11 +1,13 @@
 import cv2
 import time
 from collections import deque
+from dataclasses import replace
 from typing import Any, Dict, Optional
 from src.models.finger_counter_model import FingerCounterModel
 from src.views.gui_view import GUIView
 from src import config
 from src.config import AppSettings
+from src.models.types import HandObservation
 
 class MainController:
     """
@@ -17,6 +19,7 @@ class MainController:
         self.finger_model = FingerCounterModel(self.settings)
         self.view = GUIView(self.settings)
         self.finger_history = deque(maxlen=self.settings.smoothing_window)
+        self.hand_histories = {}
         self.show_diagnostics = self.settings.show_diagnostics
         self.show_controls = self.settings.show_controls
         self.show_skeleton = self.settings.show_skeleton
@@ -42,10 +45,31 @@ class MainController:
             open_votes = sum(frame[finger_idx] for frame in self.finger_history)
             smoothed_states.append(1 if open_votes >= (len(self.finger_history) / 2) else 0)
 
-        stabilized = dict(hand_data)
-        stabilized["finger_states"] = smoothed_states
-        stabilized["total_count"] = sum(smoothed_states)
-        stabilized["gesture_label"] = FingerCounterModel._describe_gesture(smoothed_states)
+        if isinstance(hand_data, HandObservation):
+            stabilized = replace(hand_data)
+        else:
+            stabilized = dict(hand_data)
+        if isinstance(stabilized, HandObservation):
+            stabilized.finger_states = smoothed_states
+            stabilized.total_count = sum(smoothed_states)
+            stabilized.gesture_label = FingerCounterModel._describe_gesture(smoothed_states)
+        else:
+            stabilized["finger_states"] = smoothed_states
+            stabilized["total_count"] = sum(smoothed_states)
+            stabilized["gesture_label"] = FingerCounterModel._describe_gesture(smoothed_states)
+        return stabilized
+
+    def _stabilize_hands(self, observations):
+        """Smooth each visible hand independently instead of mixing hands."""
+        stabilized = []
+        for observation in observations:
+            key = observation.hand_label
+            history = self.hand_histories.setdefault(key, deque(maxlen=self.settings.smoothing_window))
+            previous = self.finger_history
+            self.finger_history = history
+            stabilized.append(self._stabilize_hand_data(observation))
+            self.hand_histories[key] = self.finger_history
+            self.finger_history = previous
         return stabilized
 
     def _update_session_stats(self, fps: int, hand_data: Optional[Dict[str, Any]]) -> None:
@@ -90,6 +114,7 @@ class MainController:
         elif key == ord("r"):
             self._reset_session_stats()
             self.finger_history.clear()
+            self.hand_histories.clear()
 
         return True
 
@@ -114,16 +139,16 @@ class MainController:
                 results = self.finger_model.process_frame(img_rgb)
 
                 # Step 2: Analyze hand landmarks & count extended fingers
-                hand_data = self.finger_model.analyze_hand(img, results)
-                hand_data = self._stabilize_hand_data(hand_data)
+                hand_data_list = self._stabilize_hands(self.finger_model.analyze_hands(img, results))
+                hand_data = hand_data_list[0] if hand_data_list else None
                 self._update_session_stats(fps, hand_data)
 
                 # Step 3: Render finger highlights if hand is present
-                if hand_data:
+                for observation in hand_data_list:
                     if self.show_skeleton:
-                        self.view.render_hand_landmarks(img, hand_data)
-                    self.view.render_hand_box(img, hand_data)
-                    self.view.render_finger_highlights(img, hand_data)
+                        self.view.render_hand_landmarks(img, observation)
+                    self.view.render_hand_box(img, observation)
+                    self.view.render_finger_highlights(img, observation)
 
                 # Step 4: Render Finger Count HUD Box and FPS on screen
                 self.view.render_count_hud(img, hand_data)
