@@ -7,6 +7,7 @@ from src import config
 from src.controllers.main_controller import MainController
 from src.models.finger_counter_model import FingerCounterModel
 from src.models.temporal_smoother import FingerStateSmoother
+from src.gestures.engine import GestureEngine
 
 
 def build_landmarks(overrides=None):
@@ -29,6 +30,15 @@ def build_result(hands, labels):
 
 
 class FingerCounterModelTests(unittest.TestCase):
+    def test_gesture_engine_emits_change_then_hold_once(self):
+        engine = GestureEngine(hold_seconds=1.0)
+        observation = SimpleNamespace(hand_label="Right", gesture_label="Peace", confidence=0.9)
+
+        self.assertEqual(engine.update(observation, timestamp=10.0)[0].event_type, "changed")
+        self.assertEqual(engine.update(observation, timestamp=10.5), [])
+        self.assertEqual(engine.update(observation, timestamp=11.0)[0].event_type, "held")
+        self.assertEqual(engine.update(observation, timestamp=12.0), [])
+
     def test_smoother_keeps_previous_state_on_ambiguous_frame(self):
         smoother = FingerStateSmoother(window=3, switch_ratio=0.75)
         self.assertEqual(smoother.update([1, 0, 0, 0, 0])[0], 1)

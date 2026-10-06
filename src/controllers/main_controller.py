@@ -9,6 +9,7 @@ from src import config
 from src.config import AppSettings
 from src.models.types import HandObservation
 from src.models.temporal_smoother import FingerStateSmoother
+from src.gestures.engine import GestureEngine
 
 class MainController:
     """
@@ -22,6 +23,7 @@ class MainController:
         self.finger_history = deque(maxlen=self.settings.smoothing_window)
         self.hand_histories = {}
         self.hand_smoothers = {}
+        self.gesture_engine = GestureEngine()
         self.show_diagnostics = self.settings.show_diagnostics
         self.show_controls = self.settings.show_controls
         self.show_skeleton = self.settings.show_skeleton
@@ -122,6 +124,7 @@ class MainController:
             self.finger_history.clear()
             self.hand_histories.clear()
             self.hand_smoothers.clear()
+            self.gesture_engine.reset()
 
         return True
 
@@ -152,6 +155,8 @@ class MainController:
 
                 # Step 3: Render finger highlights if hand is present
                 for observation in hand_data_list:
+                    for event in self.gesture_engine.update(observation):
+                        print(f"Gesture {event.event_type}: {event.hand_label} / {event.gesture}")
                     if self.show_skeleton:
                         self.view.render_hand_landmarks(img, observation)
                     self.view.render_hand_box(img, observation)
